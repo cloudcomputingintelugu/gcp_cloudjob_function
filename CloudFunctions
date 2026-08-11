@@ -1,0 +1,109 @@
+from cloudevents.http import CloudEvent
+import functions_framework
+from google.cloud import storage
+
+
+# ============================================================
+# REPORT BUCKET
+# ============================================================
+
+REPORT_BUCKET = "ccit-reports-bucket"
+
+
+# ============================================================
+# CLOUD STORAGE EVENT FUNCTION
+# ============================================================
+
+@functions_framework.cloud_event
+def bucket_file_report(cloud_event: CloudEvent):
+
+    # --------------------------------------------------------
+    # Get event data
+    # --------------------------------------------------------
+
+    data = cloud_event.data
+
+    source_bucket_name = data["bucket"]
+    file_name = data["name"]
+
+    file_size = data.get("size", 0)
+    content_type = data.get("contentType", "unknown")
+    created = data.get("timeCreated", "unknown")
+    updated = data.get("updated", "unknown")
+
+    # --------------------------------------------------------
+    # Print file information
+    # --------------------------------------------------------
+
+    print("==========================================")
+    print("Cloud Storage File Event")
+    print("==========================================")
+
+    print(f"Source Bucket : {source_bucket_name}")
+    print(f"File          : {file_name}")
+    print(f"Size          : {file_size} bytes")
+    print(f"Content Type  : {content_type}")
+    print(f"Created       : {created}")
+    print(f"Updated       : {updated}")
+
+    # --------------------------------------------------------
+    # Create report
+    # --------------------------------------------------------
+
+    report = f"""
+File Statistics Report
+======================
+
+Source Bucket : {source_bucket_name}
+File          : {file_name}
+Size          : {file_size} bytes
+Content Type  : {content_type}
+Created       : {created}
+Updated       : {updated}
+
+Processed By  : Cloud Run Function
+"""
+
+    # --------------------------------------------------------
+    # Create Storage client
+    # --------------------------------------------------------
+
+    client = storage.Client()
+
+    # --------------------------------------------------------
+    # Get report bucket
+    # --------------------------------------------------------
+
+    report_bucket = client.bucket(REPORT_BUCKET)
+
+    # --------------------------------------------------------
+    # Create report filename
+    # --------------------------------------------------------
+
+    report_file_name = f"{file_name}.report.txt"
+
+    # --------------------------------------------------------
+    # Create report object
+    # --------------------------------------------------------
+
+    report_blob = report_bucket.blob(report_file_name)
+
+    # --------------------------------------------------------
+    # Upload report
+    # --------------------------------------------------------
+
+    report_blob.upload_from_string(
+        report,
+        content_type="text/plain"
+    )
+
+    # --------------------------------------------------------
+    # Print success message
+    # --------------------------------------------------------
+
+    print(
+        f"Report created: "
+        f"gs://{REPORT_BUCKET}/{report_file_name}"
+    )
+
+    print("Function completed successfully.")
