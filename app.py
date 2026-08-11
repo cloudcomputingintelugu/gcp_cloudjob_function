@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import os
 
 
-SOURCE_BUCKET = os.environ["SOURCE_BUCKET"]
-REPORT_BUCKET = os.environ["REPORT_BUCKET"]
+SOURCE_BUCKET = "ccit-source-bucket" #os.environ["SOURCE_BUCKET"]
+REPORT_BUCKET = "ccit-reports-bucket" #os.environ["REPORT_BUCKET"]
 
 
 def main():
